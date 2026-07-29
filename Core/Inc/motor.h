@@ -34,8 +34,6 @@ int32_t Motor_GetTotalPulses(const Motor_t *m);
 int16_t Motor_GetSpeedPps(const Motor_t *m);
 void Motor_ResetAllEncoders(void);
 
-extern Motor_t motor1;
-extern Motor_t motor2;
 extern Motor_t motor3;
 extern Motor_t motor4;
 

@@ -120,23 +120,19 @@ int main(void)
     if (now - last_disp >= 100) {
       last_disp = now;
       OLED_Clear();
-      OLED_ShowString(0, 0, "M1:", OLED_8X16);
-      OLED_ShowSignedNum(24, 0, (int32_t)g_m1_speed_mmps, 3, OLED_8X16);
-      OLED_ShowString(64, 0, "M2:", OLED_8X16);
-      OLED_ShowSignedNum(88, 0, (int32_t)g_m2_speed_mmps, 3, OLED_8X16);
-      OLED_ShowString(0, 16, "M3:", OLED_8X16);
-      OLED_ShowSignedNum(24, 16, (int32_t)g_m3_speed_mmps, 3, OLED_8X16);
-      OLED_ShowString(64, 16, "M4:", OLED_8X16);
-      OLED_ShowSignedNum(88, 16, (int32_t)g_m4_speed_mmps, 3, OLED_8X16);
-      OLED_ShowString(0, 32, "LP:", OLED_8X16);
-      OLED_ShowSignedNum(24, 32, g_left_pwm, 4, OLED_8X16);
-      OLED_ShowString(64, 32, "RP:", OLED_8X16);
-      OLED_ShowSignedNum(88, 32, g_right_pwm, 4, OLED_8X16);
-      OLED_ShowString(0, 48, "ST:", OLED_8X16);
+      OLED_ShowString(0, 0, "M3:", OLED_8X16);
+      OLED_ShowSignedNum(24, 0, (int32_t)g_m3_speed_mmps, 3, OLED_8X16);
+      OLED_ShowString(64, 0, "M4:", OLED_8X16);
+      OLED_ShowSignedNum(88, 0, (int32_t)g_m4_speed_mmps, 3, OLED_8X16);
+      OLED_ShowString(0, 16, "LP:", OLED_8X16);
+      OLED_ShowSignedNum(24, 16, g_left_pwm, 4, OLED_8X16);
+      OLED_ShowString(64, 16, "RP:", OLED_8X16);
+      OLED_ShowSignedNum(88, 16, g_right_pwm, 4, OLED_8X16);
+      OLED_ShowString(0, 32, "ST:", OLED_8X16);
       switch (g_app_state) {
-        case APP_STATE_IDLE:    OLED_ShowString(40, 48, "IDLE", OLED_8X16); break;
-        case APP_STATE_RUNNING:  OLED_ShowString(40, 48, "RUN",  OLED_8X16); break;
-        case APP_STATE_DONE:    OLED_ShowString(40, 48, "DONE", OLED_8X16); break;
+        case APP_STATE_IDLE:    OLED_ShowString(40, 32, "IDLE", OLED_8X16); break;
+        case APP_STATE_RUNNING:  OLED_ShowString(40, 32, "RUN",  OLED_8X16); break;
+        case APP_STATE_DONE:    OLED_ShowString(40, 32, "DONE", OLED_8X16); break;
       }
       OLED_Update();
     }

@@ -22,13 +22,9 @@ extern volatile int16_t g_left_pwm;
 extern volatile int16_t g_right_pwm;
 extern volatile uint8_t g_speed_ctrl_enable;
 
-extern volatile float g_m1_speed_mmps;
-extern volatile float g_m2_speed_mmps;
 extern volatile float g_m3_speed_mmps;
 extern volatile float g_m4_speed_mmps;
 
-extern volatile int16_t g_m1_speed_pps;
-extern volatile int16_t g_m2_speed_pps;
 extern volatile int16_t g_m3_speed_pps;
 extern volatile int16_t g_m4_speed_pps;
 

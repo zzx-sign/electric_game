@@ -2,18 +2,6 @@
 #include "tim.h"
 #include "gpio.h"
 
-Motor_t motor1 = {
-    .pwm_tim = &htim1, .pwm_channel = TIM_CHANNEL_1,
-    .ain1_port = AIN1_1_GPIO_Port, .ain1_pin = AIN1_1_Pin,
-    .ain2_port = AIN1_2_GPIO_Port, .ain2_pin = AIN1_2_Pin,
-    .enc_tim = &htim3
-};
-Motor_t motor2 = {
-    .pwm_tim = &htim1, .pwm_channel = TIM_CHANNEL_2,
-    .ain1_port = AIN2_1_GPIO_Port, .ain1_pin = AIN2_1_Pin,
-    .ain2_port = AIN2_2_GPIO_Port, .ain2_pin = AIN2_2_Pin,
-    .enc_tim = &htim8
-};
 Motor_t motor3 = {
     .pwm_tim = &htim1, .pwm_channel = TIM_CHANNEL_3,
     .ain1_port = AIN3_1_GPIO_Port, .ain1_pin = AIN3_1_Pin,
@@ -52,24 +40,17 @@ static void SetDir(Motor_t *m, MotorDir_t d)
 
 void Motor_InitAll(void)
 {
-    HAL_TIM_PWM_Start(motor1.pwm_tim, motor1.pwm_channel);
-    HAL_TIM_PWM_Start(motor2.pwm_tim, motor2.pwm_channel);
     HAL_TIM_PWM_Start(motor3.pwm_tim, motor3.pwm_channel);
     HAL_TIM_PWM_Start(motor4.pwm_tim, motor4.pwm_channel);
 
-    HAL_TIM_Encoder_Start(motor1.enc_tim, TIM_CHANNEL_ALL);
-    HAL_TIM_Encoder_Start(motor2.enc_tim, TIM_CHANNEL_ALL);
     HAL_TIM_Encoder_Start(motor3.enc_tim, TIM_CHANNEL_ALL);
     HAL_TIM_Encoder_Start(motor4.enc_tim, TIM_CHANNEL_ALL);
 
-    __HAL_TIM_SET_COUNTER(motor1.enc_tim, 0);
-    __HAL_TIM_SET_COUNTER(motor2.enc_tim, 0);
     __HAL_TIM_SET_COUNTER(motor3.enc_tim, 0);
     __HAL_TIM_SET_COUNTER(motor4.enc_tim, 0);
 
     Motor_StopAll();
 
-    // 使能 TIM1 主输出（高级定时器必须设置 MOE 位才能输出 PWM）
     __HAL_TIM_MOE_ENABLE(&htim1);
 }
 
@@ -83,24 +64,16 @@ void Motor_SetPwm(Motor_t *m, uint32_t pwm)
 
 void Motor_DriveAll(uint32_t pwm, MotorDir_t dir)
 {
-    SetDir(&motor1, dir);
-    SetDir(&motor2, dir);
     SetDir(&motor3, dir);
     SetDir(&motor4, dir);
-    Motor_SetPwm(&motor1, pwm);
-    Motor_SetPwm(&motor2, pwm);
     Motor_SetPwm(&motor3, pwm);
     Motor_SetPwm(&motor4, pwm);
 }
 
 void Motor_StopAll(void)
 {
-    Motor_SetPwm(&motor1, 0);
-    Motor_SetPwm(&motor2, 0);
     Motor_SetPwm(&motor3, 0);
     Motor_SetPwm(&motor4, 0);
-    SetDir(&motor1, MOTOR_STOP_COAST);
-    SetDir(&motor2, MOTOR_STOP_COAST);
     SetDir(&motor3, MOTOR_STOP_COAST);
     SetDir(&motor4, MOTOR_STOP_COAST);
 }
@@ -108,7 +81,7 @@ void Motor_StopAll(void)
 /* ============================================================
  * 差分驱动：左右轮独立PWM
  *   left_pwm / right_pwm: 绝对值表示速度，负数=后退
- *   左轮: motor1 + motor3 | 右轮: motor2 + motor4
+ *   左轮: motor3 | 右轮: motor4
  * ============================================================ */
 void Motor_DriveDiff(int16_t left_pwm, int16_t right_pwm)
 {
@@ -117,14 +90,10 @@ void Motor_DriveDiff(int16_t left_pwm, int16_t right_pwm)
     uint32_t lp = (left_pwm >= 0) ? (uint32_t)left_pwm : (uint32_t)(-left_pwm);
     uint32_t rp = (right_pwm >= 0) ? (uint32_t)right_pwm : (uint32_t)(-right_pwm);
 
-    SetDir(&motor1, ldir);
     SetDir(&motor3, ldir);
-    SetDir(&motor2, rdir);
     SetDir(&motor4, rdir);
 
-    Motor_SetPwm(&motor1, lp);
     Motor_SetPwm(&motor3, lp);
-    Motor_SetPwm(&motor2, rp);
     Motor_SetPwm(&motor4, rp);
 }
 
@@ -149,16 +118,10 @@ int16_t Motor_GetSpeedPps(const Motor_t *m)
 
 void Motor_ResetAllEncoders(void)
 {
-    motor1.enc_total = 0;
-    motor2.enc_total = 0;
     motor3.enc_total = 0;
     motor4.enc_total = 0;
-    __HAL_TIM_SET_COUNTER(motor1.enc_tim, 0);
-    __HAL_TIM_SET_COUNTER(motor2.enc_tim, 0);
     __HAL_TIM_SET_COUNTER(motor3.enc_tim, 0);
     __HAL_TIM_SET_COUNTER(motor4.enc_tim, 0);
-    motor1.enc_last = 0;
-    motor2.enc_last = 0;
     motor3.enc_last = 0;
     motor4.enc_last = 0;
 }

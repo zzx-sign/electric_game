@@ -10,7 +10,7 @@
 #define CTRL_PERIOD_S       0.01f
 
  /* ============================================================ */
-#define BASE_SPEED_PULSE    30
+#define BASE_SPEED_PULSE    50
 
 /* ============================================================
  * 速度PID参数（内环）- 使用TI参考值
@@ -25,7 +25,7 @@
 /* ============================================================
  * 转向PID参数（外环）
  * ============================================================ */
-#define STEER_KP            8.0f
+#define STEER_KP            6.8f
 #define STEER_KI            0.1f  
 #define STEER_KD            0.0f
 #define STEER_ERRINT_MAX    100.0f
@@ -37,7 +37,7 @@
  * 灰度传感器加权权重（-7~+7）
  * 中间传感器(3,4)权重为0，避免死区
  * ============================================================ */
-static const int8_t TRACK_WEIGHT[8] = {-3, -2, -1, 0, 0, 1, 2, 3};
+static const int8_t TRACK_WEIGHT[8] = {-2, -1, -1, 0, 0, 1, 1, 2};
 
 /* ============================================================
  * 转向死区阈值：误差小于此值时不转向（已弃用，改用渐进式差速）
@@ -47,7 +47,7 @@ static const int8_t TRACK_WEIGHT[8] = {-3, -2, -1, 0, 0, 1, 2, 3};
 /* ============================================================
  * 渐进式差速系数：0.5~1.0，越小转向越温和
  * ============================================================ */
-#define STEER_DIFF_RATIO     0.6f
+#define STEER_DIFF_RATIO     0.79f
 
 /* ============================================================
  * PID实例
@@ -84,16 +84,15 @@ volatile float       g_right_speed_mmps = 0.0f;
 volatile int16_t     g_left_pwm = 0;
 volatile int16_t     g_right_pwm = 0;
 volatile uint8_t     g_speed_ctrl_enable = 0;
-volatile float       g_m1_speed_mmps = 0.0f;
-volatile float       g_m2_speed_mmps = 0.0f;
 volatile float       g_m3_speed_mmps = 0.0f;
 volatile float       g_m4_speed_mmps = 0.0f;
-volatile int16_t     g_m1_speed_pps = 0;
-volatile int16_t     g_m2_speed_pps = 0;
 volatile int16_t     g_m3_speed_pps = 0;
 volatile int16_t     g_m4_speed_pps = 0;
 
 static uint8_t key_prev = 0;
+static uint8_t key_cnt = 0;
+static uint8_t key_confirmed = 0;  /* 消抖确认后的状态 */
+#define KEY_DEBOUNCE_CNT  5  /* 连续5次检测到相同状态才确认（约50ms消抖）*/
 static int16_t last_err = 0;
 static uint8_t track_detected_prev = 0;
 
@@ -194,25 +193,37 @@ void App_Init(void)
 void App_KeyScan(void)
 {
     uint8_t now = (HAL_GPIO_ReadPin(key_2_GPIO_Port, key_2_Pin) == GPIO_PIN_RESET) ? 1 : 0;
-    if (key_prev == 0 && now == 1) {
-        if (g_app_state == APP_STATE_IDLE) {
-            Motor_ResetAllEncoders();
-            PID_Clear(&pid_L);
-            PID_Clear(&pid_R);
-            PID_Clear(&pid_Steer);
-            g_left_speed_mmps = 0.0f;
-            g_right_speed_mmps = 0.0f;
-            g_left_pwm = 0;
-            g_right_pwm = 0;
-            g_speed_ctrl_enable = 1;
-            g_app_state = APP_STATE_RUNNING;
-        } else if (g_app_state == APP_STATE_RUNNING) {
-            g_speed_ctrl_enable = 0;
-            g_app_state = APP_STATE_IDLE;
-            Motor_StopAll();
+
+    if (now == key_prev) {
+        key_cnt++;
+        if (key_cnt >= KEY_DEBOUNCE_CNT) {
+            key_cnt = KEY_DEBOUNCE_CNT;
+            if (key_confirmed != now) {
+                key_confirmed = now;
+                if (now == 1) {
+                    if (g_app_state == APP_STATE_IDLE) {
+                        Motor_ResetAllEncoders();
+                        PID_Clear(&pid_L);
+                        PID_Clear(&pid_R);
+                        PID_Clear(&pid_Steer);
+                        g_left_speed_mmps = 0.0f;
+                        g_right_speed_mmps = 0.0f;
+                        g_left_pwm = 0;
+                        g_right_pwm = 0;
+                        g_speed_ctrl_enable = 1;
+                        g_app_state = APP_STATE_RUNNING;
+                    } else if (g_app_state == APP_STATE_RUNNING) {
+                        g_speed_ctrl_enable = 0;
+                        g_app_state = APP_STATE_IDLE;
+                        Motor_StopAll();
+                    }
+                }
+            }
         }
+    } else {
+        key_cnt = 0;
+        key_prev = now;
     }
-    key_prev = now;
 }
 
 /* ============================================================
@@ -231,11 +242,9 @@ static float Motor_SpeedMmps(const Motor_t *m)
 
 static float Motor_AvgSpeedMmps(void)
 {
-    int32_t sum = (int32_t)Motor_GetSpeedPps(&motor1)
-                + (int32_t)Motor_GetSpeedPps(&motor2)
-                + (int32_t)Motor_GetSpeedPps(&motor3)
+    int32_t sum = (int32_t)Motor_GetSpeedPps(&motor3)
                 + (int32_t)Motor_GetSpeedPps(&motor4);
-    return (float)sum / 4.0f / ENCODE_PER_MM / CTRL_PERIOD_S;
+    return (float)sum / 2.0f / ENCODE_PER_MM / CTRL_PERIOD_S;
 }
 
 /* ============================================================
@@ -244,8 +253,6 @@ static float Motor_AvgSpeedMmps(void)
 void Cascade_Update(void)
 {
     /* ---- 更新编码器 ---- */
-    Motor_EncoderUpdate(&motor1);
-    Motor_EncoderUpdate(&motor2);
     Motor_EncoderUpdate(&motor3);
     Motor_EncoderUpdate(&motor4);
 
@@ -262,6 +269,10 @@ void Cascade_Update(void)
         }
     }
     if (all_white) {
+        /* 清除积分，防止下次出弯时突然往前冲 */
+        pid_L.err_int = 0.0f;
+        pid_R.err_int = 0.0f;
+        pid_Steer.err_int = 0.0f;
         Motor_StopAll();
         return;
     }
@@ -274,24 +285,16 @@ void Cascade_Update(void)
     track_detected_prev = track_detected;
 
     /* ---- 计算左右轮实际速度（脉冲/控制周期） ---- */
-    int16_t p1 = Motor_GetSpeedPps(&motor1);
-    int16_t p2 = Motor_GetSpeedPps(&motor2);
     int16_t p3 = Motor_GetSpeedPps(&motor3);
     int16_t p4 = Motor_GetSpeedPps(&motor4);
-    g_m1_speed_pps = p1;
-    g_m2_speed_pps = p2;
     g_m3_speed_pps = p3;
     g_m4_speed_pps = p4;
-    float s1 = (float)p1;
-    float s2 = (float)p2;
     float s3 = (float)p3;
     float s4 = (float)p4;
-    g_m1_speed_mmps = s1;
-    g_m2_speed_mmps = s2;
     g_m3_speed_mmps = s3;
     g_m4_speed_mmps = s4;
-    float left_speed  = (s1 + s3) / 2.0f;
-    float right_speed = (s2 + s4) / 2.0f;
+    float left_speed  = s3;
+    float right_speed = s4;
     g_left_speed_mmps = left_speed;
     g_right_speed_mmps = right_speed;
 
@@ -316,7 +319,7 @@ void Cascade_Update(void)
     float target_R = (float)BASE_SPEED_PULSE + steer_diff;
 
     /* ---- VOFA+ 串口发送（调试用：发原始脉冲数） ---- */
-    Vofa_Send(target_L, s1, target_L, s3, target_R, (float)p2, target_R, (float)p4);
+    Vofa_Send(target_L, s3, 0, 0, target_R, (float)p4, 0, 0);
 
     /* 目标突变时清除积分（防止超调） */
     static float last_target_L = 0.0f, last_target_R = 0.0f;
