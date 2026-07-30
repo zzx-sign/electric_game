@@ -1,7 +1,7 @@
 Dependencies for Project 'electric_game', Target 'electric_game': (DO NOT MODIFY !)
 CompilerVersion: 5060960::V5.06 update 7 (build 960)::.\ARMCC
 F (startup_stm32f407xx.s)(0x6A69ADE8)(--cpu Cortex-M4.fp.sp -g --apcs=interwork -I.\RTE\_electric_game-IE:\Keil5\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Include--pd "__UVISION_VERSION SETA 539" --pd "_RTE_ SETA 1" --pd "STM32F407xx SETA 1" --pd "_RTE_ SETA 1"--list startup_stm32f407xx.lst --xref -o electric_game\startup_stm32f407xx.o --depend electric_game\startup_stm32f407xx.d)
-F (../Core/Src/motor.c)(0x6A69C374)(--c99 -c --cpu Cortex-M4.fp.sp -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32F4xx_HAL_Driver/Inc -I ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I ../Drivers/CMSIS/Include-I.\RTE\_electric_game-IE:\Keil5\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Include-D__UVISION_VERSION="539" -D_RTE_ -DSTM32F407xx -D_RTE_ -DUSE_HAL_DRIVER -DSTM32F407xx-o electric_game\motor.o --omf_browse electric_game\motor.crf --depend electric_game\motor.d)
+F (../Core/Src/motor.c)(0x6A6A94A6)(--c99 -c --cpu Cortex-M4.fp.sp -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32F4xx_HAL_Driver/Inc -I ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I ../Drivers/CMSIS/Include-I.\RTE\_electric_game-IE:\Keil5\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Include-D__UVISION_VERSION="539" -D_RTE_ -DSTM32F407xx -D_RTE_ -DUSE_HAL_DRIVER -DSTM32F407xx-o electric_game\motor.o --omf_browse electric_game\motor.crf --depend electric_game\motor.d)
 I (../Core/Inc/motor.h)(0x6A69C3CA)
 I (E:\Keil5\Code\ARM\ARMCC\include\stdint.h)(0x6025237E)
 I (../Core/Inc/main.h)(0x6A69ADE7)
@@ -34,7 +34,7 @@ I (../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr_ex.h)(0x69C23E69)
 I (../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h)(0x69C23E69)
 I (../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h)(0x69C23E69)
 I (../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h)(0x69C23E69)
-I (../Core/Inc/tim.h)(0x6A69AE22)
+I (../Core/Inc/tim.h)(0x6A6A94A6)
 I (../Core/Inc/gpio.h)(0x6A694CC2)
 F (../Core/Src/pid.c)(0x6A696DB0)(--c99 -c --cpu Cortex-M4.fp.sp -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32F4xx_HAL_Driver/Inc -I ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I ../Drivers/CMSIS/Include-I.\RTE\_electric_game-IE:\Keil5\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Include-D__UVISION_VERSION="539" -D_RTE_ -DSTM32F407xx -D_RTE_ -DUSE_HAL_DRIVER -DSTM32F407xx-o electric_game\pid.o --omf_browse electric_game\pid.crf --depend electric_game\pid.d)
 I (../Core/Inc/pid.h)(0x6A696DA6)
@@ -80,8 +80,8 @@ I (E:\Keil5\Code\ARM\ARMCC\include\stdarg.h)(0x60252376)
 F (../Core/Src/OLED_Data.c)(0x69888A4E)(--c99 -c --cpu Cortex-M4.fp.sp -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32F4xx_HAL_Driver/Inc -I ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I ../Drivers/CMSIS/Include-I.\RTE\_electric_game-IE:\Keil5\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Include-D__UVISION_VERSION="539" -D_RTE_ -DSTM32F407xx -D_RTE_ -DUSE_HAL_DRIVER -DSTM32F407xx-o electric_game\oled_data.o --omf_browse electric_game\oled_data.crf --depend electric_game\oled_data.d)
 I (../Core/Inc/OLED_Data.h)(0x6714E988)
 I (E:\Keil5\Code\ARM\ARMCC\include\stdint.h)(0x6025237E)
-F (../Core/Src/app.c)(0x6A6A1CDC)(--c99 -c --cpu Cortex-M4.fp.sp -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32F4xx_HAL_Driver/Inc -I ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I ../Drivers/CMSIS/Include-I.\RTE\_electric_game-IE:\Keil5\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Include-D__UVISION_VERSION="539" -D_RTE_ -DSTM32F407xx -D_RTE_ -DUSE_HAL_DRIVER -DSTM32F407xx-o electric_game\app.o --omf_browse electric_game\app.crf --depend electric_game\app.d)
-I (../Core/Inc/app.h)(0x6A69C3C0)
+F (../Core/Src/app.c)(0x6A6AADDF)(--c99 -c --cpu Cortex-M4.fp.sp -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32F4xx_HAL_Driver/Inc -I ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I ../Drivers/CMSIS/Include-I.\RTE\_electric_game-IE:\Keil5\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Include-D__UVISION_VERSION="539" -D_RTE_ -DSTM32F407xx -D_RTE_ -DUSE_HAL_DRIVER -DSTM32F407xx-o electric_game\app.o --omf_browse electric_game\app.crf --depend electric_game\app.d)
+I (../Core/Inc/app.h)(0x6A6AA168)
 I (E:\Keil5\Code\ARM\ARMCC\include\stdint.h)(0x6025237E)
 I (../Core/Inc/main.h)(0x6A69ADE7)
 I (../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h)(0x69C23E69)
@@ -118,10 +118,10 @@ I (../Core/Inc/pid.h)(0x6A696DA6)
 I (../Core/Inc/oled.h)(0x6714E2A8)
 I (../Core/Inc/OLED_Data.h)(0x6714E988)
 I (../Core/Inc/gpio.h)(0x6A694CC2)
-I (../Core/Inc/bsp_gray_sensor.h)(0x6A69C305)
+I (../Core/Inc/bsp_gray_sensor.h)(0x6A6A94A6)
 I (../Core/Inc/usart.h)(0x6A694CC3)
 F (../Core/Src/bsp_gray_sensor.c)(0x6A69C305)(--c99 -c --cpu Cortex-M4.fp.sp -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32F4xx_HAL_Driver/Inc -I ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I ../Drivers/CMSIS/Include-I.\RTE\_electric_game-IE:\Keil5\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Include-D__UVISION_VERSION="539" -D_RTE_ -DSTM32F407xx -D_RTE_ -DUSE_HAL_DRIVER -DSTM32F407xx-o electric_game\bsp_gray_sensor.o --omf_browse electric_game\bsp_gray_sensor.crf --depend electric_game\bsp_gray_sensor.d)
-I (../Core/Inc/bsp_gray_sensor.h)(0x6A69C305)
+I (../Core/Inc/bsp_gray_sensor.h)(0x6A6A94A6)
 I (E:\Keil5\Code\ARM\ARMCC\include\stdint.h)(0x6025237E)
 I (../Core/Inc/main.h)(0x6A69ADE7)
 I (../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h)(0x69C23E69)
@@ -153,7 +153,7 @@ I (../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr_ex.h)(0x69C23E69)
 I (../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h)(0x69C23E69)
 I (../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h)(0x69C23E69)
 I (../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h)(0x69C23E69)
-F (../Core/Src/main.c)(0x6A69C3B4)(--c99 -c --cpu Cortex-M4.fp.sp -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32F4xx_HAL_Driver/Inc -I ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I ../Drivers/CMSIS/Include-I.\RTE\_electric_game-IE:\Keil5\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Include-D__UVISION_VERSION="539" -D_RTE_ -DSTM32F407xx -D_RTE_ -DUSE_HAL_DRIVER -DSTM32F407xx-o electric_game\main.o --omf_browse electric_game\main.crf --depend electric_game\main.d)
+F (../Core/Src/main.c)(0x6A6AA1B3)(--c99 -c --cpu Cortex-M4.fp.sp -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32F4xx_HAL_Driver/Inc -I ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I ../Drivers/CMSIS/Include-I.\RTE\_electric_game-IE:\Keil5\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Include-D__UVISION_VERSION="539" -D_RTE_ -DSTM32F407xx -D_RTE_ -DUSE_HAL_DRIVER -DSTM32F407xx-o electric_game\main.o --omf_browse electric_game\main.crf --depend electric_game\main.d)
 I (../Core/Inc/main.h)(0x6A69ADE7)
 I (../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h)(0x69C23E69)
 I (../Core/Inc/stm32f4xx_hal_conf.h)(0x6A694CC3)
@@ -186,12 +186,12 @@ I (../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h)(0x69C23E69)
 I (../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h)(0x69C23E69)
 I (../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h)(0x69C23E69)
 I (../Core/Inc/dma.h)(0x6A694CC3)
-I (../Core/Inc/tim.h)(0x6A69AE22)
+I (../Core/Inc/tim.h)(0x6A6A94A6)
 I (../Core/Inc/usart.h)(0x6A694CC3)
 I (../Core/Inc/gpio.h)(0x6A694CC2)
 I (../Core/Inc/OLED.h)(0x6714E2A8)
 I (../Core/Inc/OLED_Data.h)(0x6714E988)
-I (../Core/Inc/app.h)(0x6A69C3C0)
+I (../Core/Inc/app.h)(0x6A6AA168)
 F (../Core/Src/gpio.c)(0x6A6986BF)(--c99 -c --cpu Cortex-M4.fp.sp -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32F4xx_HAL_Driver/Inc -I ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I ../Drivers/CMSIS/Include-I.\RTE\_electric_game-IE:\Keil5\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Include-D__UVISION_VERSION="539" -D_RTE_ -DSTM32F407xx -D_RTE_ -DUSE_HAL_DRIVER -DSTM32F407xx-o electric_game\gpio.o --omf_browse electric_game\gpio.crf --depend electric_game\gpio.d)
 I (../Core/Inc/gpio.h)(0x6A694CC2)
 I (../Core/Inc/main.h)(0x6A69ADE7)
@@ -258,8 +258,8 @@ I (../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr_ex.h)(0x69C23E69)
 I (../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h)(0x69C23E69)
 I (../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h)(0x69C23E69)
 I (../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h)(0x69C23E69)
-F (../Core/Src/tim.c)(0x6A69AE22)(--c99 -c --cpu Cortex-M4.fp.sp -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32F4xx_HAL_Driver/Inc -I ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I ../Drivers/CMSIS/Include-I.\RTE\_electric_game-IE:\Keil5\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Include-D__UVISION_VERSION="539" -D_RTE_ -DSTM32F407xx -D_RTE_ -DUSE_HAL_DRIVER -DSTM32F407xx-o electric_game\tim.o --omf_browse electric_game\tim.crf --depend electric_game\tim.d)
-I (../Core/Inc/tim.h)(0x6A69AE22)
+F (../Core/Src/tim.c)(0x6A6A94A6)(--c99 -c --cpu Cortex-M4.fp.sp -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32F4xx_HAL_Driver/Inc -I ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I ../Drivers/CMSIS/Include-I.\RTE\_electric_game-IE:\Keil5\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Include-D__UVISION_VERSION="539" -D_RTE_ -DSTM32F407xx -D_RTE_ -DUSE_HAL_DRIVER -DSTM32F407xx-o electric_game\tim.o --omf_browse electric_game\tim.crf --depend electric_game\tim.d)
+I (../Core/Inc/tim.h)(0x6A6A94A6)
 I (../Core/Inc/main.h)(0x6A69ADE7)
 I (../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h)(0x69C23E69)
 I (../Core/Inc/stm32f4xx_hal_conf.h)(0x6A694CC3)
@@ -357,7 +357,7 @@ I (../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h)(0x69C23E69)
 I (../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h)(0x69C23E69)
 I (../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h)(0x69C23E69)
 I (../Core/Inc/stm32f4xx_it.h)(0x6A6965DB)
-I (../Core/Inc/app.h)(0x6A69C3C0)
+I (../Core/Inc/app.h)(0x6A6AA168)
 F (../Core/Src/stm32f4xx_hal_msp.c)(0x6A694CC3)(--c99 -c --cpu Cortex-M4.fp.sp -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32F4xx_HAL_Driver/Inc -I ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I ../Drivers/CMSIS/Include-I.\RTE\_electric_game-IE:\Keil5\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Include-D__UVISION_VERSION="539" -D_RTE_ -DSTM32F407xx -D_RTE_ -DUSE_HAL_DRIVER -DSTM32F407xx-o electric_game\stm32f4xx_hal_msp.o --omf_browse electric_game\stm32f4xx_hal_msp.crf --depend electric_game\stm32f4xx_hal_msp.d)
 I (../Core/Inc/main.h)(0x6A69ADE7)
 I (../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h)(0x69C23E69)

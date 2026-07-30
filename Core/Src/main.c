@@ -124,15 +124,40 @@ int main(void)
       OLED_ShowSignedNum(24, 0, (int32_t)g_m3_speed_mmps, 3, OLED_8X16);
       OLED_ShowString(64, 0, "M4:", OLED_8X16);
       OLED_ShowSignedNum(88, 0, (int32_t)g_m4_speed_mmps, 3, OLED_8X16);
-      OLED_ShowString(0, 16, "LP:", OLED_8X16);
-      OLED_ShowSignedNum(24, 16, g_left_pwm, 4, OLED_8X16);
-      OLED_ShowString(64, 16, "RP:", OLED_8X16);
-      OLED_ShowSignedNum(88, 16, g_right_pwm, 4, OLED_8X16);
-      OLED_ShowString(0, 32, "ST:", OLED_8X16);
+      OLED_ShowString(0, 16, "ST:", OLED_8X16);
       switch (g_app_state) {
-        case APP_STATE_IDLE:    OLED_ShowString(40, 32, "IDLE", OLED_8X16); break;
-        case APP_STATE_RUNNING:  OLED_ShowString(40, 32, "RUN",  OLED_8X16); break;
-        case APP_STATE_DONE:    OLED_ShowString(40, 32, "DONE", OLED_8X16); break;
+        case APP_STATE_IDLE:    OLED_ShowString(40, 16, "IDLE", OLED_8X16); break;
+        case APP_STATE_RUNNING:  OLED_ShowString(40, 16, "RUN",  OLED_8X16); break;
+        case APP_STATE_DONE:    OLED_ShowString(40, 16, "DONE", OLED_8X16); break;
+      }
+      OLED_ShowString(0, 32, "MODE:", OLED_8X16);
+      switch (g_app_mode) {
+        case APP_MODE_KEY2: OLED_ShowString(48, 32, "key2", OLED_8X16); break;
+        case APP_MODE_KEY3: OLED_ShowString(48, 32, "key3", OLED_8X16); break;
+        case APP_MODE_KEY4: OLED_ShowString(48, 32, "key4", OLED_8X16); break;
+        default:            OLED_ShowString(48, 32, "----", OLED_8X16); break;
+      }
+
+      /* 显示运行时间：
+       * - 正在跑：显示当前经过时间
+       * - 触发过丢线停车：显示定格时间
+       * - 还没跑过：显示 ---- */
+      uint32_t elapsed_ms = 0;
+      if (g_app_state == APP_STATE_RUNNING && g_run_started) {
+        elapsed_ms = now - g_run_start_tick;
+      } else if (g_run_had_finish) {
+        elapsed_ms = g_run_stop_tick - g_run_start_tick;
+      }
+      uint32_t sec_int = elapsed_ms / 1000U;
+      uint32_t sec_frac = (elapsed_ms % 1000U) / 100U;
+      OLED_ShowString(0, 48, "T:", OLED_8X16);
+      if (!g_run_started) {
+        OLED_ShowString(24, 48, "----", OLED_8X16);
+      } else {
+        OLED_ShowNum(24, 48, sec_int, 3, OLED_8X16);
+        OLED_ShowChar(56, 48, '.', OLED_8X16);
+        OLED_ShowNum(64, 48, sec_frac, 1, OLED_8X16);
+        OLED_ShowString(80, 48, "s", OLED_8X16);
       }
       OLED_Update();
     }
