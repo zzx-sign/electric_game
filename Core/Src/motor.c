@@ -6,13 +6,19 @@ Motor_t motor3 = {
     .pwm_tim = &htim1, .pwm_channel = TIM_CHANNEL_3,
     .ain1_port = AIN3_1_GPIO_Port, .ain1_pin = AIN3_1_Pin,
     .ain2_port = AIN3_2_GPIO_Port, .ain2_pin = AIN3_2_Pin,
-    .enc_tim = &htim4
+    .enc_tim = &htim4,
+    .enc_last = 0,
+    .enc_total = 0,
+    .speed_pps = 0
 };
 Motor_t motor4 = {
     .pwm_tim = &htim1, .pwm_channel = TIM_CHANNEL_4,
     .ain1_port = AIN4_1_GPIO_Port, .ain1_pin = AIN4_1_Pin,
     .ain2_port = AIN4_2_GPIO_Port, .ain2_pin = AIN4_2_Pin,
-    .enc_tim = &htim2
+    .enc_tim = &htim2,
+    .enc_last = 0,
+    .enc_total = 0,
+    .speed_pps = 0
 };
 
 static void SetDir(Motor_t *m, MotorDir_t d)

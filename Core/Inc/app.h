@@ -39,4 +39,6 @@ extern volatile float g_m4_speed_mmps;
 extern volatile int16_t g_m3_speed_pps;
 extern volatile int16_t g_m4_speed_pps;
 
+extern volatile float g_accum_distance_mm;  /* 累计行驶距离（毫米） */
+
 #endif

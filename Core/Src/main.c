@@ -120,22 +120,22 @@ int main(void)
     if (now - last_disp >= 100) {
       last_disp = now;
       OLED_Clear();
-      OLED_ShowString(0, 0, "M3:", OLED_8X16);
-      OLED_ShowSignedNum(24, 0, (int32_t)g_m3_speed_mmps, 3, OLED_8X16);
-      OLED_ShowString(64, 0, "M4:", OLED_8X16);
-      OLED_ShowSignedNum(88, 0, (int32_t)g_m4_speed_mmps, 3, OLED_8X16);
-      OLED_ShowString(0, 16, "ST:", OLED_8X16);
+      OLED_ShowString(0, 0, "M3:", OLED_6X8);
+      OLED_ShowSignedNum(18, 0, (int32_t)g_m3_speed_mmps, 3, OLED_6X8);
+      OLED_ShowString(48, 0, "M4:", OLED_6X8);
+      OLED_ShowSignedNum(66, 0, (int32_t)g_m4_speed_mmps, 3, OLED_6X8);
+      OLED_ShowString(0, 8, "ST:", OLED_6X8);
       switch (g_app_state) {
-        case APP_STATE_IDLE:    OLED_ShowString(40, 16, "IDLE", OLED_8X16); break;
-        case APP_STATE_RUNNING:  OLED_ShowString(40, 16, "RUN",  OLED_8X16); break;
-        case APP_STATE_DONE:    OLED_ShowString(40, 16, "DONE", OLED_8X16); break;
+        case APP_STATE_IDLE:    OLED_ShowString(24, 8, "IDLE", OLED_6X8); break;
+        case APP_STATE_RUNNING:  OLED_ShowString(24, 8, "RUN",  OLED_6X8); break;
+        case APP_STATE_DONE:    OLED_ShowString(24, 8, "DONE", OLED_6X8); break;
       }
-      OLED_ShowString(0, 32, "MODE:", OLED_8X16);
+      OLED_ShowString(0, 16, "MODE:", OLED_6X8);
       switch (g_app_mode) {
-        case APP_MODE_KEY2: OLED_ShowString(48, 32, "key2", OLED_8X16); break;
-        case APP_MODE_KEY3: OLED_ShowString(48, 32, "key3", OLED_8X16); break;
-        case APP_MODE_KEY4: OLED_ShowString(48, 32, "key4", OLED_8X16); break;
-        default:            OLED_ShowString(48, 32, "----", OLED_8X16); break;
+        case APP_MODE_KEY2: OLED_ShowString(36, 16, "key2", OLED_6X8); break;
+        case APP_MODE_KEY3: OLED_ShowString(36, 16, "key3", OLED_6X8); break;
+        case APP_MODE_KEY4: OLED_ShowString(36, 16, "key4", OLED_6X8); break;
+        default:            OLED_ShowString(36, 16, "----", OLED_6X8); break;
       }
 
       /* 显示运行时间：
@@ -150,14 +150,23 @@ int main(void)
       }
       uint32_t sec_int = elapsed_ms / 1000U;
       uint32_t sec_frac = (elapsed_ms % 1000U) / 100U;
-      OLED_ShowString(0, 48, "T:", OLED_8X16);
+      OLED_ShowString(0, 24, "T:", OLED_6X8);
       if (!g_run_started) {
-        OLED_ShowString(24, 48, "----", OLED_8X16);
+        OLED_ShowString(12, 24, "----", OLED_6X8);
       } else {
-        OLED_ShowNum(24, 48, sec_int, 3, OLED_8X16);
-        OLED_ShowChar(56, 48, '.', OLED_8X16);
-        OLED_ShowNum(64, 48, sec_frac, 1, OLED_8X16);
-        OLED_ShowString(80, 48, "s", OLED_8X16);
+        OLED_ShowNum(12, 24, sec_int, 3, OLED_6X8);
+        OLED_ShowChar(36, 24, '.', OLED_6X8);
+        OLED_ShowNum(42, 24, sec_frac, 1, OLED_6X8);
+        OLED_ShowString(54, 24, "s", OLED_6X8);
+      }
+
+      /* 显示已行走距离（毫米），保留一位小数 */
+      OLED_ShowString(0, 32, "D:", OLED_6X8);
+      if (!g_run_started) {
+        OLED_ShowString(12, 32, "----", OLED_6X8);
+      } else {
+        OLED_ShowFloatNum(12, 32, g_accum_distance_mm, 4, 1, OLED_6X8);
+        OLED_ShowString(54, 32, "mm", OLED_6X8);
       }
       OLED_Update();
     }

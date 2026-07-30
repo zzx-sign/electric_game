@@ -56,12 +56,12 @@ static const int8_t TRACK_WEIGHT[8] = {-3, -2, -1, 0, 0, 1, 2, 3};
 #define LOOSE_LINE_WHITE_THRESHOLD  4
 
 /* ============================================================
- * key_3 模式：8 秒自动停车（HAL_GetTick 单位 ms）
- * key_4 模式：30 秒自动停车
+ * key_3 模式：走 1.5m 自动停车（毫米）
+ * key_4 模式：走 6.14159m 自动停车
  * 两者都关闭丢线停车。
  * ============================================================ */
-#define APP_KEY3_RUN_DURATION_MS    8000U
-#define APP_KEY4_RUN_DURATION_MS    30000U
+#define APP_KEY3_RUN_DISTANCE_MM   1500U      /* 1.5m = 1500mm */
+#define APP_KEY4_RUN_DISTANCE_MM   5980U      /* 5.96m 自动停 */
 
 /* 0 表示"无定时停车限制"（key_2 模式），非 0 表示达到该毫秒数自动停车。 */
 static const uint32_t APP_NO_TIMEOUT_MS = 0U;
@@ -73,7 +73,8 @@ static const uint32_t APP_NO_TIMEOUT_MS = 0U;
  *                    0 = 不切换。key_2 模式配置为 15000。
  * - phase2_speed：阶段二目标脉冲/控制周期。key_2 配置为 20。
  * - stop_white_threshold：丢线停车阈值（key_3 / key_4 模式不使用）
- * - run_duration_ms：自动停车时间（HAL_GetTick ms），0 = 不限时
+ * - run_distance_mm：自动停车距离（毫米），0 = 不限距离
+ * - run_duration_ms：保留字段（用于 key_2 等时间模式）
  * - steer_diff_ratio：差速折扣
  * - speed_kp/ki/kd：内环速度 PID 参数（阶段一）
  * - phase2_speed_kp/ki/kd：内环速度 PID 参数（阶段二）
@@ -85,7 +86,8 @@ typedef struct {
     uint16_t phase2_switch_ms;
     int16_t phase2_speed;
     uint8_t stop_white_threshold;
-    uint32_t run_duration_ms;
+    uint32_t run_distance_mm;  /* 里程计停车距离（毫米），0 = 不限距离 */
+    uint32_t run_duration_ms; /* 定时停车时间（毫秒），0 = 不限时 */
     float   steer_diff_ratio;
     float   speed_kp;
     float   speed_ki;
@@ -99,12 +101,13 @@ typedef struct {
     float   phase2_steer_ki;
 } AppProfile_t;
 
-/* key_2：前 15s 全速 50 pps，之后切到 20 pps；丢线停车，无限时 */
+/* key_2：前 15s 全速 50 pps，之后切到 20 pps；丢线停车，无限距 */
 static const AppProfile_t PROFILE_KEY2 = {
     .base_speed          = 50,
     .phase2_switch_ms    = 15000,
     .phase2_speed        = 20,
     .stop_white_threshold = 4,
+    .run_distance_mm     = 0,              /* 0 = 无限距 */
     .run_duration_ms     = APP_NO_TIMEOUT_MS,
     .steer_diff_ratio    = 0.6f,
     /* 阶段一（50 pps）速度环 */
@@ -123,11 +126,12 @@ static const AppProfile_t PROFILE_KEY2 = {
     .phase2_steer_ki     = 0.08f,
 };
 
-/* key_3：25 pps，关闭丢线停车，8 秒后自动停 */
+/* key_3：25 pps，关闭丢线停车，走 1500mmm 后自动停 */
 static const AppProfile_t PROFILE_KEY3 = {
     .base_speed          = 25,
     .stop_white_threshold = 0,            /* 0 = 禁用丢线停车 */
-    .run_duration_ms     = APP_KEY3_RUN_DURATION_MS,
+    .run_distance_mm     = APP_KEY3_RUN_DISTANCE_MM,
+    .run_duration_ms    = APP_NO_TIMEOUT_MS,
     .steer_diff_ratio    = 0.6f,          /* 慢速，沿用 0.6 方便对比调试 */
     .speed_kp            = SPEED_KP,
     .speed_ki            = SPEED_KI,
@@ -136,11 +140,12 @@ static const AppProfile_t PROFILE_KEY3 = {
     .steer_ki            = 0.06f,
 };
 
-/* key_4：29 pps，关闭丢线停车，30 秒后自动停 */
+/* key_4：29 pps，关闭丢线停车，走 5980mm 后自动停 */
 static const AppProfile_t PROFILE_KEY4 = {
     .base_speed          = 29,
-    .stop_white_threshold = 4,            /* 0 = 禁用丢线停车 */
-    .run_duration_ms     = APP_KEY4_RUN_DURATION_MS,
+    .stop_white_threshold = 0,            /* 0 = 禁用丢线停车 */
+    .run_distance_mm     = APP_KEY4_RUN_DISTANCE_MM,
+    .run_duration_ms    = APP_NO_TIMEOUT_MS,
     .steer_diff_ratio    = 0.5f,          /* 与 key_3 同设置，需要时再单独调 */
     .speed_kp            = SPEED_KP,
     .speed_ki            = SPEED_KI,
@@ -205,10 +210,11 @@ static int16_t last_err = 0;
 static uint8_t track_detected_prev = 0;
 
 volatile uint32_t g_run_start_tick   = 0;  /* 按下按键启动的时刻（HAL_GetTick ms） */
-volatile uint32_t g_run_stop_tick    = 0;  /* 触发丢线停车 / 8s 到点的时刻；为 0 表示还在运行 */
+volatile uint32_t g_run_stop_tick    = 0;  /* 触发丢线停车 / 到达目标距离的时刻；为 0 表示还在运行 */
 volatile int8_t   g_run_had_finish   = 0;  /* 是否已经触发过丢线停车（用于 main 显示时间） */
 volatile int8_t   g_run_started      = 0;  /* 是否已经开始过运行（用于 main 是否进入计时） */
 static uint32_t run_start_tick = 0;
+volatile float   g_accum_distance_mm = 0.0f;  /* 累计行驶距离（毫米） */
 
 /* 当前生效的运行参数 */
 static const AppProfile_t *g_profile = &PROFILE_KEY2;
@@ -351,6 +357,7 @@ static void Start_Run(void)
     g_run_started    = 1;
     g_profile_stage2_active = 0;  /* 重新进入阶段一 */
     track_detected_prev = 0;
+    g_accum_distance_mm = 0.0f;   /* 重置里程计 */
 }
 
 void App_KeyScan(void)
@@ -499,15 +506,14 @@ void Cascade_Update(void)
         }
     }
 
-    /* 检查是否到达自动停车时间：
-     * - key_2：run_duration_ms = 0，跳过此分支（只依赖丢线停车）
-     * - key_3：到 8s 自动停
-     * - key_4：到 30s 自动停
+    /* 检查是否到达目标距离：
+     * - key_2：run_distance_mm = 0，跳过此分支（只依赖丢线停车）
+     * - key_3：走 1500mm (1.5m) 自动停
+     * - key_4：走 6142mm (6.14159m) 自动停
      */
-    uint32_t dur = g_profile->run_duration_ms;
-    if (dur > 0) {
-        uint32_t now_ms = HAL_GetTick();
-        if ((now_ms - run_start_tick) >= dur) {
+    uint32_t target_dist = g_profile->run_distance_mm;
+    if (target_dist > 0) {
+        if (g_accum_distance_mm >= (float)target_dist) {
             pid_L.err_int = 0.0f;
             pid_R.err_int = 0.0f;
             pid_Steer.err_int = 0.0f;
@@ -515,7 +521,7 @@ void Cascade_Update(void)
             stopped_by_sensor = 1;
             g_speed_ctrl_enable = 0;
             g_app_state = APP_STATE_IDLE;
-            g_run_stop_tick  = now_ms;
+            g_run_stop_tick  = HAL_GetTick();
             g_run_had_finish = 1;
             track_detected_prev = 0;
             return;
@@ -525,9 +531,10 @@ void Cascade_Update(void)
     /* 丢线/全白停车（仅在允许时启用）：
      * key_3 / key_4 模式的 stop_white_threshold = 0，整段被跳过；
      * key_2 模式仍按 4 路白线阈值停车。
+     * 里程 < 1000mm 时不触发丢线停车（防止起步阶段误判）。
      */
     uint8_t thr = g_profile->stop_white_threshold;
-    if (thr > 0 && (white_count == 8 || white_count >= thr)) {
+    if (thr > 0 && g_accum_distance_mm >= 1000.0f && (white_count == 8 || white_count >= thr)) {
         pid_L.err_int = 0.0f;
         pid_R.err_int = 0.0f;
         pid_Steer.err_int = 0.0f;
@@ -584,6 +591,29 @@ void Cascade_Update(void)
     float right_speed = s4;
     g_left_speed_mmps = left_speed;
     g_right_speed_mmps = right_speed;
+
+    /* ---- 累计行驶距离（用于里程计停车） ---- */
+    /* 方法：用累计脉冲数直接计算距离，更可靠 */
+    /* enc_total 是从 Start_Run 以来左右轮的总脉冲数（符号代表方向） */
+    float total_pulses = (float)(Motor_GetTotalPulses(&motor3) + Motor_GetTotalPulses(&motor4)) / 2.0f;
+    g_accum_distance_mm = total_pulses / ENCODE_PER_MM;
+
+    /* 检查是否到达目标距离 */
+    if (target_dist > 0) {
+        if (g_accum_distance_mm >= (float)target_dist) {
+            pid_L.err_int = 0.0f;
+            pid_R.err_int = 0.0f;
+            pid_Steer.err_int = 0.0f;
+            Motor_StopAll();
+            stopped_by_sensor = 1;
+            g_speed_ctrl_enable = 0;
+            g_app_state = APP_STATE_IDLE;
+            g_run_stop_tick  = HAL_GetTick();
+            g_run_had_finish = 1;
+            track_detected_prev = 0;
+            return;
+        }
+    }
 
     if (!g_speed_ctrl_enable) return;
 
