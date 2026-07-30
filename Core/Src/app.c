@@ -68,35 +68,59 @@ static const uint32_t APP_NO_TIMEOUT_MS = 0U;
 
 /* ============================================================
  * 运行模式参数（profile）
- * - base_speed：左右轮目标脉冲/控制周期
+ * - base_speed：阶段一目标脉冲/控制周期（key_2 默认前 15s 全速）
+ * - phase2_switch_ms：进入阶段二的时刻（HAL_GetTick 相对 run_start_tick 的 ms），
+ *                    0 = 不切换。key_2 模式配置为 15000。
+ * - phase2_speed：阶段二目标脉冲/控制周期。key_2 配置为 20。
  * - stop_white_threshold：丢线停车阈值（key_3 / key_4 模式不使用）
  * - run_duration_ms：自动停车时间（HAL_GetTick ms），0 = 不限时
  * - steer_diff_ratio：差速折扣
- * - speed_kp/ki/kd：内环速度 PID 参数
+ * - speed_kp/ki/kd：内环速度 PID 参数（阶段一）
+ * - phase2_speed_kp/ki/kd：内环速度 PID 参数（阶段二）
+ * - steer_kp/ki：外环（转向）PID 参数（阶段一）
+ * - phase2_steer_kp/ki：外环（转向）PID 参数（阶段二）
  * ============================================================ */
 typedef struct {
     int16_t base_speed;
+    uint16_t phase2_switch_ms;
+    int16_t phase2_speed;
     uint8_t stop_white_threshold;
     uint32_t run_duration_ms;
     float   steer_diff_ratio;
     float   speed_kp;
     float   speed_ki;
     float   speed_kd;
-    float   steer_kp;   /* 外环（转向）Kp：按模式区分 */
-    float   steer_ki;   /* 外环（转向）Ki：按模式区分，避免低速模式积分累积过慢 */
+    float   steer_kp;
+    float   steer_ki;
+    float   phase2_speed_kp;
+    float   phase2_speed_ki;
+    float   phase2_speed_kd;
+    float   phase2_steer_kp;
+    float   phase2_steer_ki;
 } AppProfile_t;
 
-/* key_2：43 pps，丢线停车，无限时 */
+/* key_2：前 15s 全速 50 pps，之后切到 20 pps；丢线停车，无限时 */
 static const AppProfile_t PROFILE_KEY2 = {
-    .base_speed          = 43,
+    .base_speed          = 50,
+    .phase2_switch_ms    = 15000,
+    .phase2_speed        = 20,
     .stop_white_threshold = 4,
     .run_duration_ms     = APP_NO_TIMEOUT_MS,
     .steer_diff_ratio    = 0.6f,
+    /* 阶段一（50 pps）速度环 */
     .speed_kp            = SPEED_KP,
     .speed_ki            = SPEED_KI,
     .speed_kd            = SPEED_KD,
+    /* 阶段一（50 pps）转向环 */
     .steer_kp            = 5.5f,
     .steer_ki            = 0.1f,
+    /* 阶段二（20 pps）速度环：低速适当降低增益 */
+    .phase2_speed_kp     = 7.0f,
+    .phase2_speed_ki     = 0.5f,
+    .phase2_speed_kd     = 1.0f,
+    /* 阶段二（20 pps）转向环：降低增益减少过冲 */
+    .phase2_steer_kp     = 4.5f,
+    .phase2_steer_ki     = 0.08f,
 };
 
 /* key_3：25 pps，关闭丢线停车，8 秒后自动停 */
@@ -188,6 +212,8 @@ static uint32_t run_start_tick = 0;
 
 /* 当前生效的运行参数 */
 static const AppProfile_t *g_profile = &PROFILE_KEY2;
+/* 两阶段速度切换标志：到达 phase2_switch_ms 后置 1，Start_Run 复位为 0 */
+static uint8_t g_profile_stage2_active = 0;
 
 /* 重新载入 PID 参数与积分（模式切换 / 启动时调用） */
 static void Apply_Profile(const AppProfile_t *p)
@@ -305,7 +331,11 @@ static void Start_Run(void)
     PID_Clear(&pid_L);
     PID_Clear(&pid_R);
     PID_Clear(&pid_Steer);
-    Apply_Profile(g_profile);   /* 用当前模式的 PID 参数 */
+    Apply_Profile(g_profile);   /* 用当前模式的阶段一速度环 PID 参数 */
+    /* 阶段一切换时会把 steer 放到 Cascade_Update，这里统一补一次 */
+    pid_Steer.kp = g_profile->steer_kp;
+    pid_Steer.ki = g_profile->steer_ki;
+    pid_Steer.kd = 0.0f;
     g_left_speed_mmps  = 0.0f;
     g_right_speed_mmps = 0.0f;
     g_left_pwm  = 0;
@@ -319,6 +349,7 @@ static void Start_Run(void)
     g_run_stop_tick  = 0;
     g_run_had_finish = 0;
     g_run_started    = 1;
+    g_profile_stage2_active = 0;  /* 重新进入阶段一 */
     track_detected_prev = 0;
 }
 
@@ -517,6 +548,29 @@ void Cascade_Update(void)
     }
     track_detected_prev = track_detected;
 
+    /* ---- 按时间切换两阶段参数（key_2：前 15s 50 pps → 之后 20 pps） ---- */
+    uint16_t switch_ms = g_profile->phase2_switch_ms;
+    if (switch_ms > 0) {
+        uint32_t now_ms = HAL_GetTick();
+        if (!g_profile_stage2_active && (now_ms - run_start_tick) >= switch_ms) {
+            /* 首次进入阶段二：切换速度目标 & PID 参数，并清积分 */
+            g_profile_stage2_active = 1;
+            pid_L.err_int = 0.0f;
+            pid_R.err_int = 0.0f;
+            pid_Steer.err_int = 0.0f;
+            /* 速度环参数 */
+            pid_L.kp = g_profile->phase2_speed_kp;
+            pid_L.ki = g_profile->phase2_speed_ki;
+            pid_L.kd = g_profile->phase2_speed_kd;
+            pid_R.kp = g_profile->phase2_speed_kp;
+            pid_R.ki = g_profile->phase2_speed_ki;
+            pid_R.kd = g_profile->phase2_speed_kd;
+            /* 转向环参数 */
+            pid_Steer.kp = g_profile->phase2_steer_kp;
+            pid_Steer.ki = g_profile->phase2_steer_ki;
+        }
+    }
+
     /* ---- 计算左右轮实际速度（脉冲/控制周期） ---- */
     int16_t p3 = Motor_GetSpeedPps(&motor3);
     int16_t p4 = Motor_GetSpeedPps(&motor4);
@@ -534,11 +588,8 @@ void Cascade_Update(void)
     if (!g_speed_ctrl_enable) return;
 
     /* ---- 外环: 转向PID ---- */
-    /* 按当前模式切换转向环 Kp / Ki（key_2/3 Kp=3.5，key_4 Kp=3.8；
-     * key_2 Ki=0.1，key_3/key_4 Ki=0.06）。
-     * 切换在 PID_Update 之前，避免上一周期参数残留到本周期。 */
-    pid_Steer.kp = g_profile->steer_kp;
-    pid_Steer.ki = g_profile->steer_ki;
+    /* 速度环参数已在 phase 切换时一次性赋值，阶段一参数在 Apply_Profile 里赋值，
+     * 此处只需设置 actual/target 并计算输出。 */
     pid_Steer.actual = (float)g_track_error;
     pid_Steer.target = 0.0f;
     PID_Update(&pid_Steer);
@@ -553,7 +604,16 @@ void Cascade_Update(void)
     float steer_diff = steer_out * g_profile->steer_diff_ratio;
 
     /* ---- 差分速度目标（脉冲/控制周期） ---- */
-    float base = (float)g_profile->base_speed;
+    int16_t base_i16 = g_profile_stage2_active ? g_profile->phase2_speed
+                                               : g_profile->base_speed;
+    static int16_t last_base_i16 = 0;
+    if (last_base_i16 != 0 && base_i16 != last_base_i16) {
+        /* 阶段切换瞬间清速度 PID 积分，避免从全速→低速时积分拖尾造成抖动/反向 */
+        pid_L.err_int = 0.0f;
+        pid_R.err_int = 0.0f;
+    }
+    last_base_i16 = base_i16;
+    float base = (float)base_i16;
     float target_L = base - steer_diff;
     float target_R = base + steer_diff;
 
