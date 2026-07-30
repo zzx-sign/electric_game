@@ -28,17 +28,17 @@ Project File Date:  07/29/2026
 *** Using Compiler 'V5.06 update 7 (build 960)', folder: 'E:\Keil5\Code\ARM\ARMCC\Bin'
 Build target 'electric_game'
 compiling app.c...
-../Core/Inc/motor.h(42): warning:  #1-D: last line of file ends without a newline
+../Core/Inc/motor.h(40): warning:  #1-D: last line of file ends without a newline
   #endif
 ../Core/Inc/pid.h(38): warning:  #1-D: last line of file ends without a newline
   #endif
-../Core/Src/app.c(227): warning:  #177-D: function "Motor_SpeedMmps"  was declared but never referenced
+../Core/Src/app.c(258): warning:  #177-D: function "Motor_SpeedMmps"  was declared but never referenced
   static float Motor_SpeedMmps(const Motor_t *m)
-../Core/Src/app.c(232): warning:  #177-D: function "Motor_AvgSpeedMmps"  was declared but never referenced
+../Core/Src/app.c(263): warning:  #177-D: function "Motor_AvgSpeedMmps"  was declared but never referenced
   static float Motor_AvgSpeedMmps(void)
 ../Core/Src/app.c: 4 warnings, 0 errors
 linking...
-Program Size: Code=14822 RO-data=2554 RW-data=432 ZI-data=4040  
+Program Size: Code=14726 RO-data=2554 RW-data=424 ZI-data=4040  
 FromELF: creating hex file...
 "electric_game\electric_game.axf" - 0 Error(s), 4 Warning(s).
 
@@ -63,7 +63,7 @@ Package Vendor: Keil
 
    * Component: ARM::CMSIS:CORE@5.6.0
       Include file:  CMSIS/Core/Include/tz_context.h
-Build Time Elapsed:  00:00:02
+Build Time Elapsed:  00:00:03
 </pre>
 </body>
 </html>

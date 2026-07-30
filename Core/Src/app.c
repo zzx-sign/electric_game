@@ -10,7 +10,7 @@
 #define CTRL_PERIOD_S       0.01f
 
  /* ============================================================ */
-#define BASE_SPEED_PULSE    50
+#define BASE_SPEED_PULSE    60
 
 /* ============================================================
  * 速度PID参数（内环）- 使用TI参考值
@@ -25,7 +25,7 @@
 /* ============================================================
  * 转向PID参数（外环）
  * ============================================================ */
-#define STEER_KP            6.8f
+#define STEER_KP            5.5f
 #define STEER_KI            0.1f  
 #define STEER_KD            0.0f
 #define STEER_ERRINT_MAX    100.0f
@@ -37,7 +37,7 @@
  * 灰度传感器加权权重（-7~+7）
  * 中间传感器(3,4)权重为0，避免死区
  * ============================================================ */
-static const int8_t TRACK_WEIGHT[8] = {-2, -1, -1, 0, 0, 1, 1, 2};
+static const int8_t TRACK_WEIGHT[8] = {-4, -3, -1, 0, 0, 1, 3, 4};
 
 /* ============================================================
  * 转向死区阈值：误差小于此值时不转向（已弃用，改用渐进式差速）
@@ -47,7 +47,13 @@ static const int8_t TRACK_WEIGHT[8] = {-2, -1, -1, 0, 0, 1, 1, 2};
 /* ============================================================
  * 渐进式差速系数：0.5~1.0，越小转向越温和
  * ============================================================ */
-#define STEER_DIFF_RATIO     0.79f
+#define STEER_DIFF_RATIO     0.6f
+
+/* ============================================================
+ * 丢线停车阈值：检测到白线的传感器数量 >= 此值时停车
+ * 8 路总览，>=4 代表已经有一半传感器识别到白底，通常意味着严重偏离赛道
+ * ============================================================ */
+#define LOOSE_LINE_WHITE_THRESHOLD  4
 
 /* ============================================================
  * PID实例
@@ -78,6 +84,7 @@ static PID_t pid_Steer = {
  * 全局状态
  * ============================================================ */
 volatile AppState_t  g_app_state = APP_STATE_IDLE;
+static uint8_t stopped_by_sensor = 0;  /* 标记是否由传感器触发停车（按下按钮即可恢复运行） */
 volatile int8_t      g_track_error = 0;
 volatile float       g_left_speed_mmps = 0.0f;
 volatile float       g_right_speed_mmps = 0.0f;
@@ -201,7 +208,20 @@ void App_KeyScan(void)
             if (key_confirmed != now) {
                 key_confirmed = now;
                 if (now == 1) {
-                    if (g_app_state == APP_STATE_IDLE) {
+                    if (stopped_by_sensor) {
+                        /* 由传感器触发停车后，按一次按钮即恢复运行 */
+                        stopped_by_sensor = 0;
+                        Motor_ResetAllEncoders();
+                        PID_Clear(&pid_L);
+                        PID_Clear(&pid_R);
+                        PID_Clear(&pid_Steer);
+                        g_left_speed_mmps = 0.0f;
+                        g_right_speed_mmps = 0.0f;
+                        g_left_pwm = 0;
+                        g_right_pwm = 0;
+                        g_speed_ctrl_enable = 1;
+                        g_app_state = APP_STATE_RUNNING;
+                    } else if (g_app_state == APP_STATE_IDLE) {
                         Motor_ResetAllEncoders();
                         PID_Clear(&pid_L);
                         PID_Clear(&pid_R);
@@ -252,6 +272,11 @@ static float Motor_AvgSpeedMmps(void)
  * ============================================================ */
 void Cascade_Update(void)
 {
+    /* ---- 传感器触发的锁定停车状态：直到用户再次按下按钮才恢复 ---- */
+    if (stopped_by_sensor) {
+        return;
+    }
+
     /* ---- 更新编码器 ---- */
     Motor_EncoderUpdate(&motor3);
     Motor_EncoderUpdate(&motor4);
@@ -260,20 +285,28 @@ void Cascade_Update(void)
     g_track_error = Calc_TrackError();
     uint8_t track_detected = (g_track_error != 0) ? 1 : 0;
 
-    /* 检测是否所有传感器都检测到白线 */
-    uint8_t all_white = 1;
+    /* 检测有多少路传感器扫到白线（gray_data[i] != 0 即白底） */
+    uint8_t white_count = 0;
     for (int i = 0; i < 8; i++) {
         if (gray_data[i] != 0) {
-            all_white = 0;
-            break;
+            white_count++;
         }
     }
-    if (all_white) {
+
+    /* 触发条件 1：全白（兜底） */
+    /* 触发条件 2：白线数量超过阈值（丢线停车） */
+    if (white_count == 8 || white_count >= LOOSE_LINE_WHITE_THRESHOLD) {
         /* 清除积分，防止下次出弯时突然往前冲 */
         pid_L.err_int = 0.0f;
         pid_R.err_int = 0.0f;
         pid_Steer.err_int = 0.0f;
         Motor_StopAll();
+        /* 锁定停车状态：禁用速度控制并切到 IDLE，
+         * 直到用户再次按下按钮（App_KeyScan 中检测 stopped_by_sensor 后恢复） */
+        stopped_by_sensor = 1;
+        g_speed_ctrl_enable = 0;
+        g_app_state = APP_STATE_IDLE;
+        track_detected_prev = 0;
         return;
     }
 
